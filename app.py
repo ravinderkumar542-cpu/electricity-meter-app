@@ -8,6 +8,29 @@ st.set_page_config(
     layout="wide",
 )
 
+# ----------------- SECURITY LOCK -----------------
+# Yahan apna pasandida password set karein (Jaise: "Ravinder@123")
+APP_PASSWORD = "Ravi@2026" 
+
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+
+if not st.session_state.authenticated:
+    st.title("🔒 Security Lock")
+    st.markdown("Is app ko kholne ke liye password darj karein:")
+    
+    pwd = st.text_input("Password", type="password")
+    
+    if st.button("Login"):
+        if pwd == APP_PASSWORD:
+            st.session_state.authenticated = True
+            st.rerun()
+        else:
+            st.error("❌ Galat Password! Kripya sahi password dalein.")
+    st.stop() # Agar password galat hai to app yahi ruk jayegi
+# -------------------------------------------------
+
+# (Neeche aapka purana app ka code hai)
 DATA_FILE = "meter_data.csv"
 
 def load_data():
@@ -67,10 +90,9 @@ if submit_button:
   st.rerun()
 
 if not df.empty:
-  # Delete last entry ka option sidebar mein
   st.sidebar.divider()
   if st.sidebar.button("❌ Delete Last Entry"):
-    df = df.iloc[:-1]  # Aakhri row hata dega
+    df = df.iloc[:-1] 
     df.to_csv(DATA_FILE, index=False)
     st.sidebar.success("🗑️ Aakhri entry delete ho gayi!")
     st.rerun()
