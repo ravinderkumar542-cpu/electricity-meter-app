@@ -10,10 +10,15 @@ st.title("⚡ Electricity Meter Reading Tracker")
 
 DATA_FILE = "meter_data.csv"
 
-# Load or Initialize Data
+# Load or Initialize Data with proper columns
 if os.path.exists(DATA_FILE):
     try:
         df = pd.read_csv(DATA_FILE)
+        expected_cols = ["Date", "Reading", "Units Consumed", "Estimated Bill (₹)", "Notes"]
+        for col in expected_cols:
+            if col not in df.columns:
+                df = pd.DataFrame(columns=expected_cols)
+                break
     except Exception as e:
         df = pd.DataFrame(columns=["Date", "Reading", "Units Consumed", "Estimated Bill (₹)", "Notes"])
 else:
@@ -22,17 +27,15 @@ else:
 # Sidebar Menu
 menu = st.sidebar.selectbox("Menu", ["📊 Dashboard & Records", "➕ Add New Reading", "⚙️ Rate Calculator Settings"])
 
-# Rate per unit (Default assumption e.g., ₹7 per unit)
 RATE_PER_UNIT = 7.0
 
 if menu == "📊 Dashboard & Records":
     st.header("📊 Reading Records & History")
     
-    if not df.empty:
-        # Show metrics
+    if not df.empty and "Reading" in df.columns and len(df) > 0:
         latest_reading = df.iloc[-1]["Reading"]
-        total_units = df["Units Consumed"].sum()
-        total_bill = df["Estimated Bill (₹)"].sum()
+        total_units = df["Units Consumed"].sum() if "Units Consumed" in df.columns else 0
+        total_bill = df["Estimated Bill (₹)"].sum() if "Estimated Bill (₹)" in df.columns else 0
         
         col1, col2, col3 = st.columns(3)
         col1.metric("📌 Latest Reading", f"{latest_reading} units")
@@ -42,7 +45,6 @@ if menu == "📊 Dashboard & Records":
         st.divider()
         st.dataframe(df, use_container_width=True)
         
-        # Download button for CSV
         csv_data = df.to_csv(index=False).encode('utf-8')
         st.download_button(
             label="📥 Download Data as CSV",
@@ -64,14 +66,13 @@ elif menu == "➕ Add New Reading":
         submit_btn = st.form_submit_button("💾 Save Reading")
         
         if submit_btn:
-            # Calculate units consumed from last entry
-            if not df.empty:
+            if not df.empty and "Reading" in df.columns and len(df) > 0:
                 last_reading = df.iloc[-1]["Reading"]
                 units_consumed = current_reading - last_reading
                 if units_consumed < 0:
-                    units_consumed = 0 # Safety check if meter resets
+                    units_consumed = 0
             else:
-                units_consumed = current_reading # First entry
+                units_consumed = current_reading
                 
             est_bill = units_consumed * RATE_PER_UNIT
             
@@ -83,7 +84,6 @@ elif menu == "➕ Add New Reading":
                 "Notes": notes
             }
             
-            # Append and save
             df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
             df.to_csv(DATA_FILE, index=False)
             
@@ -92,4 +92,4 @@ elif menu == "➕ Add New Reading":
 elif menu == "⚙️ Rate Calculator Settings":
     st.header("⚙️ Settings & Info")
     st.write(f"**Current Rate per Unit:** ₹ {RATE_PER_UNIT} / unit")
-    st.info("Aap yahan apne bijli ke slab ke hisaब se rate customize bhi kar sakte hain.")
+    st.info("Aap yahan apne bijli ke slab ke hisaब से rate customize bhi kar sakte hain.")
